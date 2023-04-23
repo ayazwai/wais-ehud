@@ -188,3 +188,194 @@ end)
 --@length: number
 
 ```
+
+
+## FOR vRP USERS 
+
+ONLY FOR THE LATEST vRP WITH FACTIONS, NOT ONLY WITH GROUPS! YOU HAVE IN THE FOLDER A README.MD WITH THE NECESARY INSTRUCTIONS FOR INSTALLING THE SCRIPT RIGHT FOR YOUR SERVER !!!!!!!! ONLY DUNKO FUNCTIONS !!!!!!!!!!
+
+For Money Hud, you need to use the next triggers at the vRP.setMoney and vRP.setBankMoney
+
+
+TriggerClientEvent("wais:setData", source, {money = money + amount}) 
+
+
+function vRP.setMoney(user_id,value)
+  local tmp = vRP.getUserTmpTable(user_id)
+  if tmp then
+    tmp.wallet = value
+  end
+
+  local source = vRP.getUserSource(user_id)
+  if source ~= nil then
+    local accounts = {
+      [1] = {name = "money", money = value},
+      [2] = {name = "bank", money = vRP.getBankMoney(user_id)},
+    }
+    TriggerClientEvent("wais:setData", source, {type = "UPDATE_MONEY", object = accounts, cashItem = false, prefix = "." , symbol = "$"}) 
+  end
+end
+
+function vRP.setBankMoney(user_id,value)
+  local tmp = vRP.getUserTmpTable(user_id)
+  if tmp then
+    tmp.bank = value
+  end
+  local source = vRP.getUserSource(user_id)
+  if source ~= nil then
+    local accounts = {
+      [1] = {name = "money", money = vRP.getMoney(user_id)},
+      [2] = {name = "bank", money = value},
+    }
+    TriggerClientEvent("wais:setData", source, {type = "UPDATE_MONEY", object = accounts, cashItem = false, prefix = "." , symbol = "$"}) 
+  end
+end
+
+
+
+
+function vRP.addUserFaction(user_id,theGroup)
+	local player = vRP.getUserSource(user_id)
+	if(player)then
+		local ngroup = factions[theGroup]
+		if ngroup then
+			local factionRank = ngroup.fRanks[1].rank
+			local tmp = vRP.getUserDataTable(user_id)
+			if tmp then
+				Player(player).state.faction = theGroup
+				Player(player).state.factionGrade = 1
+				Player(player).state.factionName = vRP.getFactionRankName(user_id,1)
+				Player(player).state.salary = vRP.getFactionRankSalary(theGroup, factionRank)
+				tmp.fName = theGroup
+				tmp.fRank = factionRank
+				tmp.fLeader = 0
+				tmp.fCoLeader = 0
+        TriggerClientEvent("wais:setData", source, {type = "UPDATE_JOB", name = theGroup, label = factionRank}) 
+				exports.oxmysql:query("UPDATE vrp_users SET faction = @group, factionRank = @rank WHERE id = @user_id", {user_id = user_id, group = theGroup, rank = factionRank}, function()end)
+				exports.oxmysql:query("SELECT * FROM vrp_users WHERE id = @user_id", {user_id = user_id}, function (rows)
+					thePlayer = rows[1]
+					table.insert(factionMembers[theGroup], thePlayer)
+				end)
+			end
+		end
+	end
+end
+
+
+function vRP.removeUserFaction(user_id,theGroup)
+	local player = vRP.getUserSource(user_id)
+	if(player)then
+		local tmp = vRP.getUserDataTable(user_id)
+		if tmp then
+			for i, v in pairs(factionMembers[theGroup])do
+				if(v.id == user_id)then
+					Player(player).state.faction = "user"
+					Player(player).state.factionGrade = 0 
+					Player(player).state.factionName = "none"
+					Player(player).state.salary = 0
+					tmp.fName = "user"
+					tmp.fRank = 'none'
+					tmp.fLeader = 0
+					tmp.fCoLeader = 0
+          			TriggerClientEvent("wais:setData", source, {type = "UPDATE_JOB", name = "Somer", label = "Somer"}) 
+					exports.oxmysql:query("UPDATE vrp_users SET faction = @group, factionRank = @rank, isFactionLeader = 0, isFactionCoLeader = 0 WHERE id = @user_id", {user_id = user_id, group = "user", rank = "none"})
+					table.remove(factionMembers[theGroup], i)
+				end
+			end
+		end
+	else
+		for i, v in pairs(factionMembers[theGroup])do
+			if(v.id == user_id)then
+				table.remove(factionMembers[theGroup], i)
+				exports.oxmysql:query("UPDATE vrp_users SET faction = @group, factionRank = @rank, isFactionLeader = 0, isFactionCoLeader = 0 WHERE id = @user_id", {user_id = user_id, group = "user", rank = "none"}, function()end)
+			end
+		end
+	end
+end
+
+
+For The PlayerId Display you need to add this trigger in vrp/base.lua at "vRPcli:playerSpawned" event, and should look like this 
+
+TriggerClientEvent("wais:setData", source, {type = "PLAYER_LOADED", playerId = user_id}) 
+
+RegisterServerEvent("vRPcli:playerSpawned")
+AddEventHandler("vRPcli:playerSpawned", function()
+    Debug.pbegin("playerSpawned")
+    -- register user sources and then set first spawn to false
+    local user_id = vRP.getUserId(source)
+    local player = source
+    if user_id ~= nil then
+        vRP.user_sources[user_id] = source
+        local tmp = vRP.getUserTmpTable(user_id)
+        tmp.spawns = tmp.spawns+1
+        local first_spawn = (tmp.spawns == 1)
+        if first_spawn then
+            for k,v in pairs(vRP.user_sources) do
+                vRPclient.addPlayer(source,{v})
+            end
+            vRPclient.addPlayer(-1,{source})
+        end
+		TriggerClientEvent("wais:setData", source, {type = "PLAYER_LOADED", playerId = user_id}) 
+        TriggerEvent("vRP:playerSpawn",user_id,player,first_spawn)
+    end
+    Debug.pend()
+end)
+
+
+For the Hunger/Thirst System you need to add this trigger in vrp/modules/survival.lua  at vRP.varyThirst and vRP.varyHunger functions, and should look like this
+
+TriggerClientEvent("waisHud:onTick", vRP.getUserSource(user_id), {{name = "hunger", percent = data.hunger},{name = "thirst", percent = data.thirst}})
+
+function vRP.varyThirst(user_id, variation)
+    if vRPConfig.EnableFoodAndWater then 
+        local data = vRP.getUserDataTable(user_id)
+        if data then
+            local was_thirsty = data.thirst >= 100
+            data.thirst = data.thirst + variation
+            local is_thirsty = data.thirst >= 100
+
+            -- apply overflow as damage
+            local overflow = data.thirst - 100
+            if overflow > 0 then
+                vRPclient.varyHealth(vRP.getUserSource(user_id), {-overflow * cfg.overflow_damage_factor})
+            end
+
+            if data.thirst < 0 then
+                data.thirst = 0
+            elseif data.thirst > 100 then
+                data.thirst = 100
+            end
+
+            -- set progress bar data
+            local source = vRP.getUserSource(user_id)
+			TriggerClientEvent("waisHud:onTick", source, {{name = "hunger", percent = data.hunger},{name = "thirst", percent = data.thirst}})
+        end
+    end
+end
+
+function vRP.varyHunger(user_id, variation)
+    if vRPConfig.EnableFoodAndWater then 
+        local data = vRP.getUserDataTable(user_id)
+        if data then
+            local was_starving = data.hunger >= 100
+            data.hunger = data.hunger + variation
+            local is_starving = data.hunger >= 100
+
+            -- apply overflow as damage
+            local overflow = data.hunger - 100
+            if overflow > 0 then
+                vRPclient.varyHealth(vRP.getUserSource(user_id), {-overflow * cfg.overflow_damage_factor})
+            end
+
+            if data.hunger < 0 then
+                data.hunger = 0
+            elseif data.hunger > 100 then
+                data.hunger = 100
+            end
+
+            -- set progress bar data
+            local source = vRP.getUserSource(user_id)
+			TriggerClientEvent("waisHud:onTick", source, {{name = "hunger", percent = data.hunger},{name = "thirst", percent = data.thirst}})
+        end
+    end
+end
