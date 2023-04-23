@@ -11,7 +11,7 @@
 * Open the config file and you will see a variable called ***Config.ShowMapOnlyInTheCar***. If you change this variable to `true @boolean`, the map will only work when you are in the car.
 
 ## How to activate Stress?
-* If you change the variable named ***Config.StressSystem*** in the config file to `true @boolean`, you will see that the necessary settings for stress and stress are now active in hud. Note that for ESX this system will only reflect the data, there are no lines of code to increase or decrease stress. There is such a file for QB, you can download it from here. [title](https://cdn.discordapp.com/attachments/1035485961217384488/1099749164302205088/qb-stress.rar)
+* If you change the variable named ***Config.StressSystem*** in the config file to `true @boolean`, you will see that the necessary settings for stress and stress are now active in hud. Note that for ESX this system will only reflect the data, there are no lines of code to increase or decrease stress. There is such a file for QB, you can download it from here. [QB STRESS](https://cdn.discordapp.com/attachments/1035485961217384488/1099749164302205088/qb-stress.rar)
 
 ## What is ***Config.RefreshTimes***?
 * This regeneration time affects resmon. If you increase the number to 200 or 500, health, armor, food, thirst, stamina and stress information will be updated a little later. Increasing the number will cause the resmon to decrease and decreasing the number will cause it to increase. 
