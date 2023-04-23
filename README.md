@@ -189,14 +189,13 @@ end)
 
 ```
 
-
 ## FOR vRP USERS 
 
 ONLY FOR THE LATEST vRP WITH FACTIONS, NOT ONLY WITH GROUPS! YOU HAVE IN THE FOLDER A README.MD WITH THE NECESARY INSTRUCTIONS FOR INSTALLING THE SCRIPT RIGHT FOR YOUR SERVER !!!!!!!! ONLY DUNKO FUNCTIONS !!!!!!!!!!
 
 For Money Hud, you need to use the next triggers at the vRP.setMoney and vRP.setBankMoney
 
-
+```
 TriggerClientEvent("wais:setData", source, {money = money + amount}) 
 
 
@@ -230,9 +229,6 @@ function vRP.setBankMoney(user_id,value)
     TriggerClientEvent("wais:setData", source, {type = "UPDATE_MONEY", object = accounts, cashItem = false, prefix = "." , symbol = "$"}) 
   end
 end
-
-
-
 
 function vRP.addUserFaction(user_id,theGroup)
 	local player = vRP.getUserSource(user_id)
@@ -292,10 +288,12 @@ function vRP.removeUserFaction(user_id,theGroup)
 		end
 	end
 end
+```
 
 
 For The PlayerId Display you need to add this trigger in vrp/base.lua at "vRPcli:playerSpawned" event, and should look like this 
 
+```
 TriggerClientEvent("wais:setData", source, {type = "PLAYER_LOADED", playerId = user_id}) 
 
 RegisterServerEvent("vRPcli:playerSpawned")
@@ -320,10 +318,11 @@ AddEventHandler("vRPcli:playerSpawned", function()
     end
     Debug.pend()
 end)
-
+```
 
 For the Hunger/Thirst System you need to add this trigger in vrp/modules/survival.lua  at vRP.varyThirst and vRP.varyHunger functions, and should look like this
 
+```
 TriggerClientEvent("waisHud:onTick", vRP.getUserSource(user_id), {{name = "hunger", percent = data.hunger},{name = "thirst", percent = data.thirst}})
 
 function vRP.varyThirst(user_id, variation)
@@ -379,3 +378,4 @@ function vRP.varyHunger(user_id, variation)
         end
     end
 end
+```
